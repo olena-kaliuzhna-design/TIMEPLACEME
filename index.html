@@ -711,6 +711,384 @@ Updated
 </p>
 </div>
 </section>
+<!-- ===== TIMEPLACEME 3D globe block (added) ===== -->
+<section aria-labelledby='tpm-globe-heading' class='tpm-map tpm-globe' id='launch-globe'>
+<div class='tpm-map__inner'>
+<div class='tpm-map__head'>
+<p class='tpm-map__eyebrow'>The same map, now in 3D</p>
+<h2 class='tpm-map__heading' id='tpm-globe-heading'>Spin the world</h2>
+<p class='tpm-map__sub'>Drag to turn the globe. Hover or tap any point and it stops so you can read what's happening there.</p>
+</div>
+</div>
+<div class='tpm-globe__stage' data-globe-stage>
+<canvas class='tpm-globe__canvas' aria-hidden='true'></canvas>
+<div class='tpm-globe__dots' data-globe-dots></div>
+<div class='tpm-city__card tpm-globe__card' data-globe-card hidden></div>
+</div>
+<div class='tpm-map__inner' data-globe-foot></div>
+</section>
+<style>
+.tpm-globe { border-top: 1px solid rgba(255,255,255,0.04); }
+.tpm-globe__stage {
+  position: relative;
+  width: min(620px, calc(100vw - 32px));
+  aspect-ratio: 1 / 1;
+  margin: 36px auto 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tpm-globe__stage::before {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,195,74,0.10) 0%, rgba(139,195,74,0) 70%);
+  pointer-events: none;
+}
+.tpm-globe__canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  cursor: grab; touch-action: pan-y;
+  opacity: 0; transition: opacity 1.2s ease;
+  border-radius: 50%;
+}
+.tpm-globe__canvas.is-ready { opacity: 1; }
+.tpm-globe__canvas.is-dragging { cursor: grabbing; }
+.tpm-globe__dots { position: absolute; inset: 0; pointer-events: none; }
+
+.tpm-gdot {
+  position: absolute; left: 0; top: 0;
+  width: 28px; height: 28px; margin: -14px 0 0 -14px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; background: none; cursor: pointer;
+  pointer-events: auto;
+  transition: opacity .35s ease, filter .35s ease;
+  --c: #8BC34A; --size: 9px; --o: .86;
+}
+.tpm-gdot.is-hidden { opacity: 0; filter: blur(6px); pointer-events: none; }
+.tpm-gdot__core {
+  position: relative; z-index: 1;
+  width: var(--size); height: var(--size); border-radius: 50%;
+  background: var(--c); opacity: var(--o);
+  box-shadow: 0 0 0 2px #151515, 0 0 12px var(--c);
+  transition: transform .2s ease;
+}
+.tpm-gdot__ring {
+  position: absolute; left: 50%; top: 50%;
+  width: calc(var(--size) * 2.6); height: calc(var(--size) * 2.6);
+  margin: calc(var(--size) * -1.3) 0 0 calc(var(--size) * -1.3);
+  border: 1.5px solid var(--c); border-radius: 50%;
+  opacity: 0; pointer-events: none;
+  animation: tpm-gpulse 2.4s ease-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.tpm-gdot__ring + .tpm-gdot__ring { animation-delay: calc(var(--d, 0s) + .8s); }
+@keyframes tpm-gpulse {
+  0% { transform: scale(.35); opacity: .75; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.tpm-gdot:hover .tpm-gdot__core,
+.tpm-gdot:focus-visible .tpm-gdot__core,
+.tpm-gdot.is-open .tpm-gdot__core { transform: scale(1.35); opacity: 1; }
+.tpm-gdot:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; border-radius: 50%; }
+
+.tpm-gdot--exploring  { --size: 8px;  --o: .6; }
+.tpm-gdot--contacted  { --size: 9px;  --o: .75; }
+.tpm-gdot--active     { --size: 10px; --o: .9; }
+.tpm-gdot--interested { --size: 11px; --o: 1; }
+.tpm-gdot--partner    { --size: 12px; --o: 1; --c: #A6E05A; }
+.tpm-gdot--partner .tpm-gdot__core { background: #E8FFD1; box-shadow: 0 0 0 2px #151515, 0 0 10px #A6E05A, 0 0 22px rgba(139,195,74,.8); }
+.tpm-gdot--country    { --c: #ea4c7d; --o: .95; }
+.tpm-gdot--country .tpm-gdot__core { background: rgba(234,76,125,.35); border: 1.5px solid #ea4c7d; box-shadow: 0 0 12px rgba(234,76,125,.5); }
+.tpm-gdot--sm { --size: 11px; }
+.tpm-gdot--md { --size: 15px; }
+.tpm-gdot--lg { --size: 21px; }
+
+/* The card reuses the map's own card styles; only placement changes. */
+.tpm-globe .tpm-globe__card {
+  position: absolute; left: 0; top: 0; bottom: auto; right: auto;
+  opacity: 1; visibility: visible; transform: none;
+  pointer-events: auto; z-index: 30;
+  transition: opacity .16s ease;
+}
+.tpm-globe .tpm-globe__card[hidden] { display: none; }
+.tpm-globe__hint {
+  margin-top: 14px; text-align: center;
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tpm-gdot__ring { animation: none; }
+}
+</style>
+<script>
+/* cobe v2.0.1 (MIT, github.com/shuding/cobe) — inlined so the page needs no extra file */
+(function(){
+function Re(e,t,r){let a=e.createShader(t);return e.shaderSource(a,r),e.compileShader(a),e.getShaderParameter(a,e.COMPILE_STATUS)?a:(e.deleteShader(a),null)}function Y(e,t,r){let a=Re(e,e.VERTEX_SHADER,t),o=Re(e,e.FRAGMENT_SHADER,r);if(!a||!o)return null;let i=e.createProgram();return e.attachShader(i,a),e.attachShader(i,o),e.linkProgram(i),e.getProgramParameter(i,e.LINK_STATUS)?(e.deleteShader(a),e.deleteShader(o),i):(e.deleteProgram(i),null)}function H(e,t,r){let a={};for(let o of r)a[o]=e.getUniformLocation(t,o);return a}function Q(e,t,r){let a={};for(let o of r)a[o]=e.getAttribLocation(t,o);return a}function Ae(e){let t={},r={},a={},o=document.createElement("style");function i(t,r,a,o){let i=t[r];i||(i=document.createElement("div"),i.style.cssText="position:absolute;width:1px;height:1px;pointer-events:none;anchor-name:"+a,e.append(i),t[r]=i),i.style.left=100*o.x+"%",i.style.top=100*o.y+"%"}return document.head.append(o),{m:function(e,r){let o={};for(let n of e){let e=n.id;if(!e)continue;let f=r(n.location);o[e]=1,i(t,e,"--cobe-"+e,f),f.visible?a["--cobe-visible-"+e]="N":delete a["--cobe-visible-"+e]}for(let e in t)o[e]||(t[e].remove(),delete t[e],delete a["--cobe-visible-"+e])},a:function(e,t){let o={};for(let n of e){let e=n.id;if(!e)continue;let f=t(n);o[e]=1,i(r,e,"--cobe-arc-"+e,f),f.visible?a["--cobe-visible-arc-"+e]="N":delete a["--cobe-visible-arc-"+e]}for(let e in r)o[e]||(r[e].remove(),delete r[e],delete a["--cobe-visible-arc-"+e])},r:function(){for(let e in t)t[e].remove();for(let e in r)r[e].remove();o.remove()},s:function(){let e="";for(let t in a)e+=t+":"+a[t]+";";o.textContent=":root{"+e+"}"}}}var{PI:Z,sin:le,cos:_e}=Math,Be="attribute vec2 a;void main(){gl_Position=vec4(a,0,1);}",Ce="precision highp float;uniform vec2 t,v,s;uniform vec3 F,w;uniform vec4 n;uniform float k,x,y;uniform sampler2D z;float u;mat3 A(float a,float b){float c=cos(a),d=cos(b),e=sin(a),f=sin(b);return mat3(d,f*e,-f*c,0,c,e,f,d*-e,d*c);}vec3 B(vec3 c,out float G){c=c.xzy;float q=max(2.,floor(log2(2.236068*k*3.141593*(1.-c.z*c.z))*.72021));vec2 g=floor(pow(1.618034,q)/2.236068*vec2(1,1.618034)+.5),d=fract((g+1.)*.618034)*6.283185-3.883222,e=-2.*g,f=vec2(atan(c.y,c.x),c.z-1.),r=floor(vec2(e.y*f.x-d.y*(f.y*k+1.),-e.x*f.x+d.x*(f.y*k+1.))/(d.x*e.y-e.x*d.y));float o=3.141593;vec3 C;for(float h=0.;h<4.;h+=1.){vec2 D=vec2(mod(h,2.),floor(h*.5));float j=dot(g,r+D);if(j>k)continue;float a=j,b=0.;a>=16384.?(a-=16384.,b+=.868872):0.,a>=8192.?(a-=8192.,b+=.934436):0.,a>=4096.?(a-=4096.,b+=.467218):0.,a>=2048.?(a-=2048.,b+=.733609):0.,a>=1024.?(a-=1024.,b+=.866804):0.,a>=512.?(a-=512.,b+=.433402):0.,a>=256.?(a-=256.,b+=.216701):0.,a>=128.?(a-=128.,b+=.108351):0.,a>=64.?(a-=64.,b+=.554175):0.,a>=32.?(a-=32.,b+=.777088):0.,a>=16.?(a-=16.,b+=.888544):0.,a>=8.?(a-=8.,b+=.944272):0.,a>=4.?(a-=4.,b+=.472136):0.,a>=2.?(a-=2.,b+=.236068):0.,a>=1.?(a-=1.,b+=.618034):0.;float l=fract(b)*6.283185,i=1.-2.*j*u,m=sqrt(1.-i*i);vec3 p=vec3(cos(l)*m,sin(l)*m,i);float E=length(c-p);if(E<o)o=E,C=p;}G=o;return C.xzy;}void main(){u=1./k;vec2 c=1./t,b=(gl_FragCoord.xy*c*2.-1.)/x-v*vec2(1,-1)*c;b.x*=t.x*c.y;float a=dot(b,b),f=0.;vec4 l=vec4(0);if(a<=.64){float g;vec4 m=vec4(0);vec3 h=normalize(vec3(b,sqrt(.64-a)));mat3 o=A(s.y,s.x);float i=h.z;vec3 d=B(h*o,g);float j=asin(d.y),e=acos(-d.x/cos(j));e=d.z<0.?-e:e;float p=max(texture2D(z,vec2(e*.5/3.141593,-(j/3.141593+.5))).x,y),q=p*smoothstep(8e-3,0.,g)*pow(i,n.y)*n.x;m+=vec4(F*(mix((1.-q)*pow(i,.4),q,n.z)+.1)+pow(1.-i,4.)*w,1),l+=m*(1.+n.w)*.5,f=(1.-a)*(1.-a)*smoothstep(0.,1.,.2/(a-.64));}else{float r=sqrt(.2/(a-.64));f=smoothstep(.5,1.,r/(r+1.));}gl_FragColor=l+vec4(f*w,f);}",be="varying vec2 m;varying vec3 g;varying float h;attribute vec2 n;attribute vec3 p,w;attribute float q,x;uniform vec2 b,r;uniform float i,j,k,s;void main(){float c=cos(j),d=sin(j),e=cos(i),f=sin(i);vec3 a=p*(.8+s),l=vec3(e*a.x+f*a.z,f*d*a.x+c*a.y-e*d*a.z,-f*c*a.x+d*a.y+e*c*a.z);if(l.z<0.&&length(l.xy)<.8){gl_Position=vec4(2,2,0,1);return;}float t=b.y/b.x;vec2 y=(l.xy+n*q*2.)*vec2(t,1)*k+r*vec2(1,-1)*k/b;gl_Position=vec4(y,0,1),m=n,g=w,h=x;}",ge="precision highp float;varying vec2 m;varying vec3 g;varying float h;uniform vec3 v;void main(){if(length(m)>.25)discard;vec3 a=h>.5?g:v;gl_FragColor=vec4(a,1);}",Fe="varying vec3 i;varying float j,s,t;attribute vec2 k;attribute vec3 l,m,N;attribute float v,w,O;uniform vec2 g,x;uniform float y,z,h,A;mat3 B(float a,float b){float c=cos(a),d=cos(b),e=sin(a),f=sin(b);return mat3(d,f*e,-f*c,0,c,e,f,d*-e,d*c);}vec3 C(vec3 c,vec3 d,vec3 e,float a){float b=1.-a;return b*b*c+2.*b*a*d+a*a*e;}vec3 D(vec3 c,vec3 b,vec3 d,float a){float e=1.-a;return 2.*e*(b-c)+2.*a*(d-b);}void main(){mat3 b=B(z,y);float c=.8+A;vec3 d=l*c,e=m*c,f=l+m;float n=length(f);vec3 E=n>1e-3?f/n:vec3(0,1,0),o=E*(.8+v);float p=k.x;vec3 F=C(d,o,e,p),q=b*F,G=D(d,o,e,p),H=b*G;vec2 a=H.xy;float r=length(a);vec2 I=r>1e-3?vec2(-a.y,a.x)/r:vec2(1,0);float J=g.x/g.y;vec2 K=q.xy*vec2(1./J,1)*h+x*vec2(1,-1)*h/g,P=K+I*w*k.y*h;gl_Position=vec4(P,0,1),i=N,j=O,s=q.z,t=length(q.xy);}",Le="precision highp float;varying vec3 i;varying float j,s,t;uniform vec3 M;void main(){if(s<0.&&t<.8)discard;vec3 a=j>.5?i:M;gl_FragColor=vec4(a,1);}",ee=.8;function U([e,t]){let r=e*Z/180,a=t*Z/180-Z,o=_e(r);return[-o*_e(a),le(r),o*le(a)]}var Pe=(e,t)=>{let r={alpha:!0,stencil:!1,antialias:!0,depth:!1,preserveDrawingBuffer:!1,...t.context},a=e.getContext("webgl2",r),o=!!a;if(a||(a=e.getContext("webgl",r)),!a)return{destroy:()=>{},update:()=>{}};let i=o?null:a.getExtension("ANGLE_instanced_arrays"),n=t.devicePixelRatio||1;e.width=t.width*n,e.height=t.height*n;let f=t.phi||0,l=t.theta||0,c=t.markers||[],s=t.arcs||[],A=t.mapSamples||1e4,v=t.mapBrightness||1,d=t.mapBaseBrightness||0,g=t.baseColor||[1,1,1],m=t.markerColor||[1,.5,0],u=t.glowColor||[1,1,1],h=t.arcColor||[.3,.6,1],E=t.arcWidth??1,R=t.arcHeight??.2,b=t.diffuse||1,x=t.dark||0,y=t.opacity??1,T=t.offset||[0,0],B=t.scale||1,p=t.markerElevation??.05,w=Y(a,Be,Ce),C=Y(a,be,ge),F=Y(a,Fe,Le);if(!w)return{destroy:()=>{},update:()=>{}};let D=a.createBuffer();a.bindBuffer(a.ARRAY_BUFFER,D),a.bufferData(a.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),a.STATIC_DRAW);let _=a.createBuffer();a.bindBuffer(a.ARRAY_BUFFER,_);let N=[];for(let e=0;e<=32;e++){let t=e/32;N.push(t,-1,t,1)}a.bufferData(a.ARRAY_BUFFER,new Float32Array(N),a.STATIC_DRAW);let k=a.createBuffer(),S=a.createBuffer(),I=H(a,w,["t","s","k","x","v","F","w","n","y","z"]),P=H(a,C,["i","j","b","k","r","v","s"]),L=Q(a,C,["n","p","q","w","x"]),z=H(a,F,["y","z","g","h","x","M","A"]),G=Q(a,F,["k","l","m","v","w","N","O"]),M=a.getAttribLocation(w,"a"),V=a.createTexture();a.bindTexture(a.TEXTURE_2D,V),a.texImage2D(a.TEXTURE_2D,0,a.RGB,1,1,0,a.RGB,a.UNSIGNED_BYTE,new Uint8Array([0,0,0])),a.texParameteri(a.TEXTURE_2D,a.TEXTURE_MIN_FILTER,a.NEAREST),a.texParameteri(a.TEXTURE_2D,a.TEXTURE_MAG_FILTER,a.NEAREST);let j=new Image;j.onload=()=>{a.bindTexture(a.TEXTURE_2D,V),a.texImage2D(a.TEXTURE_2D,0,a.RGB,a.RGB,a.UNSIGNED_BYTE,j),a.generateMipmap(a.TEXTURE_2D),a.texParameteri(a.TEXTURE_2D,a.TEXTURE_MIN_FILTER,a.NEAREST),a.texParameteri(a.TEXTURE_2D,a.TEXTURE_MAG_FILTER,a.NEAREST),a.activeTexture(a.TEXTURE0),a.bindTexture(a.TEXTURE_2D,V)},j.src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAACAAQAAAADMzoqnAAAECklEQVR42u3VsW4jRRzH8d94gzfF4Q0VQaC4vBLTRTp0mze4ggfAPAE5XQEFsGNAVIjwBrmW7h7gJE+giKjyABTZE4g06LKJETdRJvtD65kdz6yduKABiW+TVfzRf2bXYxtcE/59YJCz6YdbgQF6ACSRrwYKYImmh5PbwOewlV3wlQNbAN6SEExjUOO+BU0aCSnxReHABUlK4YFQeJeUT3da8IIkZ6NGoSnFY5KsMoVzMKfECUnqxgPYRArarmUCndHwzIEaQEpg5xVdBXROl8mpAQx5dUgPiHoYAAkg5w3JABR06byGAVgcRGAz5bznj6phBQNRFwyqgdxebH6gshJAesWoFhgYpApAFoG8BIZ/fEhSox5jDjQXmV0Ar5XJfAIrALi3URVs09gHIL4XJCkLC5LH9JWiArABFCSrQjdgkBzRJ0WJeUOSNyQAfJJwUSWUBRlJQ8oGHATACGlBynnzy2kEYLNjrxouigD8BZcgOeVPqh12RtufaCN5wCPVDpvQ9lsIrqndsJtDcWqBCpf4hWN7OdWHBw58FwIaNOU/n1TpMW2DFaD48cmr4185T8NHkpUFX749pQPVdgRKC/DGoQPVeAEKv+WHvY8OOWNTPRp5kHuwSf8wzXtVBKR7YwEH9H3lQUaypUfSATOALyVNu5vZJW31Bnx98nkLfDUWJaz6ixvm+RIQRdl3kmRxxiaDoGnZW4CpPfkaQadlcPim1xOSvETQo7Lv75enVAXJ3xGUlony4KQBBWUM1NiDc6qhyS8RgQs18OCMMtPDaAUIyg0PZkRWDqs+wnKJBTDI1Js6BolegOsKmUxNDBAAKqQyMQmidhegBlLZ+wwKYdv5M/8x1khkb1cgKqP2H+MKyV5vS+whrE8DQDgAlUAoRBX056EElJCjJVACeJBZgNfVp+iCCm4RBWCgKsRxASSA9KgDhDtCiTuMyfHsKXzhC6wNAIjjWb8LKAOA2ctk3FmCOlgKFy8f1N0JJtgsxinYnVAHt4t3gPzZXSCTyCWCQmBT91QE3B5yarSN40dNHYPka4TlDhTUI8zLvl0JSL3vZn6DsCFZOeB2yROEpR68sECQQA++xIGCR2X7DwlEoLRgUrZrqlUg50S1uy43YqDcN6UFBVkhAjWiCV2Q0jgQPdplMKxvBXodcOfAwJYvgdL+1etA1YJJfBcZlQV7sO1i2gHoNiyxtQ5sBsCgWyoxCHiFFd2L5nUTCqMAqGUgsQ9f5kCcCiZgRYkMgMTd5WsB1rTzj0Em14BE4r+QxN1lCEsVur2PoF5Wbg8RJXR4djgvBgauhLywoEZQrt1KKRdVS4CdlJ8qafyP+9KIj/nE/d7kKwH9jgS72e9DV+kvfTWgct4ZyP8Byb8BPG7MaaIIkAQAAAAASUVORK5CYII=";let J=0;function O(t){let r=Math.cos(l),a=Math.cos(f),o=Math.sin(l),i=Math.sin(f),c=a*t[0]+i*t[2],s=i*o*t[0]+r*t[1]-a*o*t[2];return[(c/(e.width/e.height)*B+T[0]*B*n/e.width+1)/2,(-s*B+T[1]*B*n/e.height+1)/2,-i*r*t[0]+o*t[1]+a*r*t[2]>=0||c*c+s*s>=.64]}function W(e){let t=U(e),r=ee+p,a=O([t[0]*r,t[1]*r,t[2]*r]);return{x:a[0],y:a[1],visible:a[2]}}function X(e){let t=U(e.from),r=U(e.to),a=[t[0]+r[0],t[1]+r[1],t[2]+r[2]],o=(a[0]**2+a[1]**2+a[2]**2)**.5;if(o<.001)return null;let i=.25*(ee+p)+.5*(ee+R+p)/o,n=O([a[0]*i,a[1]*i,a[2]*i]);return{x:n[0],y:n[1],visible:n[2]}}function K(e,t,r,n,f){e<0||(a.enableVertexAttribArray(e),a.vertexAttribPointer(e,t,a.FLOAT,!1,r,n),o?a.vertexAttribDivisor(e,f):i&&i.vertexAttribDivisorANGLE(e,f))}let q,Z=document.createElement("div");Z.style.cssText="position:relative;width:100%;height:100%",e.parentElement?.insertBefore(Z,e),Z.append(e);let $=Ae(Z);function te(t){if(t.phi!=q&&(f=t.phi),t.theta!=q&&(l=t.theta),t.markers&&function(e){c=e;let t=new Float32Array(8*c.length);c.forEach((e,r)=>{t.set([...U(e.location),e.size,...e.color||[0,0,0],e.color?1:0],8*r)}),a.bindBuffer(a.ARRAY_BUFFER,k),a.bufferData(a.ARRAY_BUFFER,t,a.DYNAMIC_DRAW)}(t.markers),t.arcs&&function(e){s=e,J=s.length;let t=new Float32Array(12*s.length);s.forEach((e,r)=>{t.set([...U(e.from),...U(e.to),R+p,.005*E,...e.color||[0,0,0],e.color?1:0],12*r)}),a.bindBuffer(a.ARRAY_BUFFER,S),a.bufferData(a.ARRAY_BUFFER,t,a.DYNAMIC_DRAW)}(t.arcs),t.width&&t.height&&(e.width=t.width*n,e.height=t.height*n),t.mapSamples!=q&&(A=t.mapSamples),t.mapBrightness!=q&&(v=t.mapBrightness),t.mapBaseBrightness!=q&&(d=t.mapBaseBrightness),t.baseColor!=q&&(g=t.baseColor),t.markerColor!=q&&(m=t.markerColor),t.glowColor!=q&&(u=t.glowColor),t.arcColor!=q&&(h=t.arcColor),t.arcWidth!=q&&(E=t.arcWidth),t.arcHeight!=q&&(R=t.arcHeight),t.diffuse!=q&&(b=t.diffuse),t.dark!=q&&(x=t.dark),t.opacity!=q&&(y=t.opacity),t.offset!=q&&(T=t.offset),t.scale!=q&&(B=t.scale),t.markerElevation!=q&&(p=t.markerElevation),$.m(c,W),$.a(s,X),$.s(),a.viewport(0,0,e.width,e.height),a.clearColor(0,0,0,0),a.clear(a.COLOR_BUFFER_BIT),a.enable(a.BLEND),a.blendFunc(a.SRC_ALPHA,a.ONE_MINUS_SRC_ALPHA),a.useProgram(w),a.bindBuffer(a.ARRAY_BUFFER,D),a.enableVertexAttribArray(M),a.vertexAttribPointer(M,2,a.FLOAT,!1,0,0),o?a.vertexAttribDivisor(M,0):i&&i.vertexAttribDivisorANGLE(M,0),a.uniform2f(I.t,e.width,e.height),a.uniform2f(I.s,f,l),a.uniform1f(I.k,A),a.uniform1f(I.x,B),a.uniform2f(I.v,T[0]*n,T[1]*n),a.uniform3fv(I.F,g),a.uniform3fv(I.w,u),a.uniform4f(I.n,v,b,x,y),a.uniform1f(I.y,d),a.uniform1i(I.z,0),a.activeTexture(a.TEXTURE0),a.bindTexture(a.TEXTURE_2D,V),a.drawArrays(a.TRIANGLES,0,6),F&&J>0){a.useProgram(F),a.bindBuffer(a.ARRAY_BUFFER,_),G.k>=0&&(a.enableVertexAttribArray(G.k),a.vertexAttribPointer(G.k,2,a.FLOAT,!1,0,0),o?a.vertexAttribDivisor(G.k,0):i&&i.vertexAttribDivisorANGLE(G.k,0)),a.bindBuffer(a.ARRAY_BUFFER,S);let t=48;if(K(G.l,3,t,0,1),K(G.m,3,t,12,1),K(G.v,1,t,24,1),K(G.w,1,t,28,1),K(G.N,3,t,32,1),K(G.O,1,t,44,1),a.uniform1f(z.y,f),a.uniform1f(z.z,l),a.uniform2f(z.g,e.width,e.height),a.uniform1f(z.h,B),a.uniform2f(z.x,T[0]*n,T[1]*n),a.uniform3fv(z.M,h),a.uniform1f(z.A,p),o)a.drawArraysInstanced(a.TRIANGLE_STRIP,0,66,J);else if(i)i.drawArraysInstancedANGLE(a.TRIANGLE_STRIP,0,66,J);else for(let e=0;e<J;e++)a.drawArrays(a.TRIANGLE_STRIP,0,66)}if(C&&c.length>0){a.useProgram(C),a.bindBuffer(a.ARRAY_BUFFER,D),L.n>=0&&(a.enableVertexAttribArray(L.n),a.vertexAttribPointer(L.n,2,a.FLOAT,!1,0,0),o?a.vertexAttribDivisor(L.n,0):i&&i.vertexAttribDivisorANGLE(L.n,0)),a.bindBuffer(a.ARRAY_BUFFER,k);let t=32;K(L.p,3,t,0,1),K(L.q,1,t,12,1),K(L.w,3,t,16,1),K(L.x,1,t,28,1),a.uniform1f(P.i,f),a.uniform1f(P.j,l),a.uniform2f(P.b,e.width,e.height),a.uniform1f(P.k,B),a.uniform2f(P.r,T[0]*n,T[1]*n),a.uniform3fv(P.v,m),a.uniform1f(P.s,p),function(e){if(o)a.drawArraysInstanced(a.TRIANGLES,0,6,e);else if(i)i.drawArraysInstancedANGLE(a.TRIANGLES,0,6,e);else for(let t=0;t<e;t++)a.drawArrays(a.TRIANGLES,0,6)}(c.length)}}return te({markers:c,arcs:s}),{update:te,destroy:()=>{a.deleteBuffer(D),a.deleteBuffer(_),a.deleteBuffer(k),a.deleteBuffer(S),a.deleteProgram(w),C&&a.deleteProgram(C),F&&a.deleteProgram(F),$.r()}}};
+window.tpmCreateGlobe = Pe;
+})();
+</script>
+<script>
+(function () {
+  var section = document.getElementById('launch-globe');
+  var source = document.getElementById('launch-map');
+  if (!section || !source || !window.tpmCreateGlobe) return;
+
+  var stage = section.querySelector('[data-globe-stage]');
+  var canvas = stage.querySelector('canvas');
+  var layer = stage.querySelector('[data-globe-dots]');
+  var card = stage.querySelector('[data-globe-card]');
+  var foot = section.querySelector('[data-globe-foot]');
+
+  // Real coordinates for every place on the flat map. The flat map positions
+  // its dots by eye in percentages, which do not survive the trip to a sphere.
+  var COORDS = {
+    'Portugal': [39.6, -8.0], 'Moldova': [47.0, 28.6], 'Austria': [47.5, 14.5],
+    'Australia': [-25.3, 133.8], 'France': [46.6, 2.4], 'Japan': [36.2, 138.3],
+    'Germany': [51.2, 10.4], 'South Korea': [36.5, 127.9], 'Serbia': [44.0, 20.9],
+    'Ukraine': [49.0, 31.4], 'United States': [39.8, -98.6], 'Italy': [42.8, 12.6],
+    'Turkey': [39.0, 35.2], 'Estonia': [58.6, 25.0], 'Brazil': [-10.3, -53.1],
+    'Myanmar': [21.9, 95.96], 'Spain': [40.4, -3.7], 'United Kingdom': [54.0, -2.0],
+    'Valencia': [39.47, -0.38], 'Barcelona': [41.39, 2.17], 'Azores': [37.74, -25.68],
+    'Dubai': [25.2, 55.27], 'Sofia': [42.7, 23.32], 'Liverpool': [53.41, -2.99],
+    'Rio de Janeiro': [-22.91, -43.17], 'Hamburg': [53.55, 9.99], 'Riga': [56.95, 24.11],
+    'Ubud': [-8.51, 115.26], 'Melbourne': [-37.81, 144.96], 'Sydney': [-33.87, 151.21],
+    'Berlin': [52.52, 13.41], 'Brussels': [50.85, 4.35], 'Malta': [35.94, 14.37],
+    'Paris': [48.86, 2.35], 'Lisbon': [38.72, -9.14], 'Istanbul': [41.01, 28.98],
+    'Kyiv': [50.45, 30.52], 'London': [51.51, -0.13],
+    'Sevilla': [37.39, -5.98], 'Limassol': [34.68, 33.04], 'Vienna': [48.21, 16.37],
+    'Copenhagen': [55.68, 12.57], 'Cyprus': [35.1, 33.4]
+  };
+  var STATUSES = ['exploring', 'contacted', 'active', 'interested', 'partner'];
+
+  // Every marker is read from the flat map above, so both blocks always show
+  // the same places and the same words.
+  var places = [];
+  Array.prototype.forEach.call(source.querySelectorAll('.tpm-city'), function (el, i) {
+    var srcCard = el.querySelector('.tpm-city__card');
+    var nameEl = el.querySelector('.tpm-city__card-city');
+    if (!srcCard || !nameEl) return;
+    var name = nameEl.textContent.trim();
+    var loc = COORDS[name];
+    if (!loc) { // fallback: approximate from the flat map's percentages
+      loc = [90 - (parseFloat(el.style.top) || 50) * 1.8, (parseFloat(el.style.left) || 50) * 3.6 - 180];
+    }
+    var isCountry = el.getAttribute('data-layer') === 'country';
+    var cls = ['tpm-gdot'];
+    if (isCountry) {
+      cls.push('tpm-gdot--country');
+      cls.push(/tpm-country--lg/.test(el.className) ? 'tpm-gdot--lg' : /tpm-country--md/.test(el.className) ? 'tpm-gdot--md' : 'tpm-gdot--sm');
+    } else {
+      STATUSES.forEach(function (s) { if (el.classList.contains('tpm-city--' + s)) cls.push('tpm-gdot--' + s); });
+    }
+    var hit = el.querySelector('button');
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = cls.join(' ');
+    btn.setAttribute('aria-label', (hit && hit.getAttribute('aria-label')) || name);
+    btn.style.setProperty('--d', ((i % 6) * 0.4) + 's');
+    btn.innerHTML = '<span class="tpm-gdot__ring"></span><span class="tpm-gdot__ring"></span><span class="tpm-gdot__core"></span>';
+    layer.appendChild(btn);
+    places.push({ name: name, loc: loc, el: btn, card: srcCard, x: 0, y: 0, visible: false });
+  });
+
+  // Legend, totals and status line: the same nodes the flat map uses.
+  ['.tpm-map__legend', '.tpm-map__reach'].forEach(function (sel) {
+    var n = source.querySelector(sel);
+    if (n) foot.appendChild(n.cloneNode(true));
+  });
+  var hint = document.createElement('p');
+  hint.className = 'tpm-globe__hint';
+  hint.textContent = 'Drag to spin · tap a point to read it';
+  foot.appendChild(hint);
+
+  // ---- Projection: the same maths cobe uses for its own markers ----------
+  var R = 0.8;
+  function to3D(lat, lon) {
+    var r = lat * Math.PI / 180, a = lon * Math.PI / 180 - Math.PI, c = Math.cos(r);
+    return [-c * Math.cos(a) * R, Math.sin(r) * R, c * Math.sin(a) * R];
+  }
+  function project(p, phi, theta) {
+    var cT = Math.cos(theta), sT = Math.sin(theta), cP = Math.cos(phi), sP = Math.sin(phi);
+    var x = cP * p[0] + sP * p[2];
+    var y = sP * sT * p[0] + cT * p[1] - cP * sT * p[2];
+    var z = -sP * cT * p[0] + sT * p[1] + cP * cT * p[2];
+    return { x: (x + 1) / 2, y: (-y + 1) / 2, visible: z >= 0.04 };
+  }
+  places.forEach(function (p) { p.v = to3D(p.loc[0], p.loc[1]); });
+
+  // phi that brings a longitude to the front of the globe.
+  function phiFor(lon) { return 1.5 * Math.PI - lon * Math.PI / 180; }
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var SPEED = 0.0025;
+  var THETA0 = 0.32;
+  var phi = phiFor(15);        // start over Europe, where most points are
+  var theta = THETA0;
+  var target = null;           // {phi, theta} when gliding to a focused point
+  var hovering = null, pinned = null, drag = null, onScreen = true;
+
+  var globe = null;
+  function init() {
+    var w = stage.offsetWidth;
+    if (!w || globe) return;
+    globe = window.tpmCreateGlobe(canvas, {
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+      width: w * Math.min(window.devicePixelRatio || 1, 2),
+      height: w * Math.min(window.devicePixelRatio || 1, 2),
+      phi: phi, theta: theta, dark: 1, diffuse: 1.4,
+      mapSamples: 16000, mapBrightness: 7,
+      baseColor: [0.32, 0.34, 0.3],
+      markerColor: [0.545, 0.765, 0.29],
+      glowColor: [0.09, 0.11, 0.07],
+      markers: [], markerElevation: 0, opacity: 0.9
+    });
+    requestAnimationFrame(function () { canvas.classList.add('is-ready'); });
+    loop();
+  }
+
+  function paused() { return reduce || hovering || pinned || drag || target; }
+
+  function loop() {
+    if (target) {
+      phi += (target.phi - phi) * 0.12;
+      theta += (target.theta - theta) * 0.12;
+      if (Math.abs(target.phi - phi) < 0.002 && Math.abs(target.theta - theta) < 0.002) target = null;
+    } else if (!paused() && onScreen) {
+      phi += SPEED;
+    }
+    if (onScreen || target || drag) {
+      globe.update({ phi: phi, theta: theta });
+      place();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function place() {
+    for (var i = 0; i < places.length; i++) {
+      var p = places[i], q = project(p.v, phi, theta);
+      p.x = q.x; p.y = q.y; p.visible = q.visible;
+      p.el.style.left = (q.x * 100).toFixed(3) + '%';
+      p.el.style.top = (q.y * 100).toFixed(3) + '%';
+      p.el.classList.toggle('is-hidden', !q.visible);
+    }
+    var shown = pinned || hovering;
+    if (shown) {
+      if (!shown.visible) { close(); return; }
+      positionCard(shown);
+    }
+  }
+
+  // ---- Card ---------------------------------------------------------------
+  function open(p) {
+    if (card._for !== p) {
+      card.className = p.card.className + ' tpm-globe__card';
+      card.innerHTML = p.card.innerHTML;
+      card.removeAttribute('aria-hidden');
+      card._for = p;
+    }
+    places.forEach(function (o) { o.el.classList.toggle('is-open', o === p); });
+    card.hidden = false;
+    positionCard(p);
+  }
+  function close() {
+    hovering = null; pinned = null; card._for = null;
+    card.hidden = true;
+    places.forEach(function (o) { o.el.classList.remove('is-open'); });
+  }
+  function positionCard(p) {
+    var W = stage.offsetWidth, H = stage.offsetHeight;
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var px = p.x * W, py = p.y * H, gap = 18;
+    var left = Math.max(-8, Math.min(W - cw + 8, px - cw / 2));
+    var top = py - ch - gap;
+    if (top < 0) top = py + gap;
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
+  }
+
+  places.forEach(function (p) {
+    p.el.addEventListener('pointerenter', function (e) {
+      if (e.pointerType !== 'mouse' || drag) return;
+      hovering = p;
+      if (!pinned) open(p);
+    });
+    p.el.addEventListener('pointerleave', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      if (hovering === p) hovering = null;
+      if (!pinned) close();
+    });
+    p.el.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (pinned === p) { close(); return; }
+      pinned = p; open(p);
+    });
+    p.el.addEventListener('focus', function () {
+      var kb = false;
+      try { kb = p.el.matches(':focus-visible'); } catch (err) {}
+      if (!kb) return;
+      // Keyboard users can reach points on the far side: the globe turns to them.
+      if (!p.visible) target = { phi: phi + angleTo(phiFor(p.loc[1]) - phi), theta: THETA0 };
+      pinned = p; open(p);
+    });
+    p.el.addEventListener('blur', function () {
+      setTimeout(function () { if (!stage.contains(document.activeElement)) close(); }, 0);
+    });
+  });
+  function angleTo(d) { return Math.atan2(Math.sin(d), Math.cos(d)); }
+
+  document.addEventListener('click', function (e) {
+    if (pinned && !card.contains(e.target)) close();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && (pinned || hovering)) close(); });
+
+  // ---- Drag to spin -------------------------------------------------------
+  canvas.addEventListener('pointerdown', function (e) {
+    drag = { x: e.clientX, y: e.clientY, phi: phi, theta: theta, moved: false, id: e.pointerId };
+    target = null;
+    canvas.classList.add('is-dragging');
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+    if (!drag.moved && e.pointerType !== 'mouse' && Math.abs(dy) > Math.abs(dx)) { endDrag(); return; } // let the page scroll
+    drag.moved = true;
+    phi = drag.phi + dx / 160;
+    theta = Math.max(-0.6, Math.min(0.9, drag.theta + dy / 400));
+  }, { passive: true });
+  function endDrag() { drag = null; canvas.classList.remove('is-dragging'); }
+  window.addEventListener('pointerup', function (e) {
+    if (!drag) return;
+    var moved = drag.moved;
+    endDrag();
+    if (!moved && pinned) close();
+  });
+  window.addEventListener('pointercancel', endDrag);
+
+  // Only spin while the block is on screen.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; }, { rootMargin: '100px' }).observe(stage);
+  }
+
+  // Re-create on resize so the canvas stays sharp.
+  var lastW = 0;
+  function sized() {
+    var w = stage.offsetWidth;
+    if (!w || w === lastW) return;
+    lastW = w;
+    if (globe) {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      globe.update({ width: w * dpr, height: w * dpr });
+    } else { init(); }
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(sized).observe(stage);
+  sized();
+})();
+</script>
+<!-- ===== end globe block ===== -->
+
+
 <dialog aria-labelledby='city-vote-title' class='tpm-vote' id='city-vote'>
 <form class='tpm-vote__form' method='dialog'>
 <button aria-label='Close' class='tpm-vote__close' data-city-vote-close type='button'>×</button>
