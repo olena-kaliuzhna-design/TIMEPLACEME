@@ -119,7 +119,7 @@ section { position: relative; }
 @media (max-width: 860px) { .nav__links, .nav__cta { display: none; } .nav__burger { display: block; } }
 
 /* ---------- HERO ---------- */
-.hero { min-height: 100svh; display: grid; place-items: center; padding: 130px 0 60px; overflow: hidden; isolation: isolate; }
+.hero { display: grid; place-items: center; padding: 130px 0 56px; overflow: hidden; isolation: isolate; }
 .hero__bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .hero__aurora {
   position: absolute; width: 900px; height: 900px; left: 50%; top: 40%; transform: translate(-50%,-50%);
@@ -489,24 +489,8 @@ section { position: relative; }
   </div>
 </section>
 
-<!-- STATS -->
-<section class="stats" aria-label="Launch numbers">
-  <div class="wrap stats__row">
-    <div class="stat stat--pink rv"><div class="stat__n"><span data-count="59">0</span><em>+</em></div><div class="stat__l">app downloads / installs</div></div>
-    <div class="stat stat--pink rv" style="--rd:.08s"><div class="stat__n"><span data-count="18">0</span></div><div class="stat__l">countries</div></div>
-    <div class="stat rv" style="--rd:.16s"><div class="stat__n"><span data-count="0" data-from="partners">0</span><em>✓</em></div><div class="stat__l">verified partners</div></div>
-    <div class="stat rv" style="--rd:.24s"><div class="stat__n"><span data-count="0" data-from="cities">0</span></div><div class="stat__l">cities on the launch map</div></div>
-  </div>
-</section>
-
-<!-- PARTNER MARQUEE -->
-<section aria-label="Verified partners">
-  <p class="marquee-cap">Experience places gifted with TIMEPLACEME</p>
-  <div class="marquee"><div class="marquee__track" data-marquee></div></div>
-</section>
-
 <!-- MAP -->
-<section class="section" id="map">
+<section class="section" id="map" style="padding-top:40px">
   <div class="wrap">
     <div class="map__head">
       <div class="rv">
@@ -541,8 +525,24 @@ section { position: relative; }
   </div>
 </section>
 
+<!-- STATS -->
+<section class="stats" aria-label="Launch numbers">
+  <div class="wrap stats__row">
+    <div class="stat stat--pink rv"><div class="stat__n"><span data-count="59">0</span><em>+</em></div><div class="stat__l">app downloads / installs</div></div>
+    <div class="stat stat--pink rv" style="--rd:.08s"><div class="stat__n"><span data-count="18">0</span></div><div class="stat__l">countries</div></div>
+    <div class="stat rv" style="--rd:.16s"><div class="stat__n"><span data-count="0" data-from="partners">0</span><em>✓</em></div><div class="stat__l">verified partners</div></div>
+    <div class="stat rv" style="--rd:.24s"><div class="stat__n"><span data-count="0" data-from="cities">0</span></div><div class="stat__l">cities on the launch map</div></div>
+  </div>
+</section>
+
+<!-- PARTNER MARQUEE -->
+<section aria-label="Verified partners">
+  <p class="marquee-cap">Experience places gifted with TIMEPLACEME</p>
+  <div class="marquee"><div class="marquee__track" data-marquee></div></div>
+</section>
+
 <!-- TWO SIDES -->
-<section class="section" id="sides" style="padding-top:0">
+<section class="section" id="sides" style="padding-top:90px">
   <div class="wrap center">
     <h2 class="sides__title rv">Two sides.<span class="hand">One first experience.</span></h2>
     <div class="seg rv" data-seg data-side="gift" role="tablist" aria-label="Choose a side">
