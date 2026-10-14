@@ -344,6 +344,31 @@ section { position: relative; }
 .blog__all { display: flex; justify-content: center; margin-top: 36px; }
 @media (max-width: 860px) { .bento { grid-template-columns: 1fr; } .post--big { grid-row: auto; } }
 
+/* ---------- Blog (blog7 layout) ---------- */
+.b7__inner { display: flex; flex-direction: column; align-items: center; gap: 64px; }
+.b7__head { text-align: center; max-width: 760px; }
+.b7__badge { display: inline-flex; align-items: center; padding: 4px 12px; margin-bottom: 24px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--text); }
+.b7__title { margin: 0 0 16px; font-size: clamp(30px, 4vw, 48px); font-weight: 600; letter-spacing: -.03em; line-height: 1.1; text-wrap: pretty; }
+.b7__desc { margin: 0 0 28px; color: var(--muted); font-size: clamp(16px, 1.4vw, 18px); }
+.b7__all { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--green); text-underline-offset: 4px; }
+.b7__all svg, .b7-card__foot svg { width: 16px; height: 16px; transition: transform .3s var(--ease); }
+.b7__all:hover { text-decoration: underline; } .b7__all:hover svg { transform: translateX(3px); }
+.b7__grid { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.b7-card { display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: border-color .3s, transform .5s var(--ease); }
+.b7-card:hover { border-color: rgba(85,212,0,.35); transform: translateY(-3px); }
+.b7-card__media { display: block; aspect-ratio: 16 / 9; overflow: hidden; background: #1a1d17; transition: opacity .2s; }
+.b7-card__media:hover { opacity: .7; }
+.b7-card__media img { width: 100%; height: 100%; object-fit: cover; object-position: center; color: transparent; }
+.b7-card__head { padding: 24px 24px 6px; }
+.b7-card__head h3 { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+.b7-card__head a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.b7-card__body { padding: 0 24px; }
+.b7-card__body p { margin: 0; color: var(--muted); font-size: 15px; }
+.b7-card__foot { padding: 20px 24px 24px; }
+.b7-card__foot a { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; color: var(--text); }
+.b7-card__foot a:hover { text-decoration: underline; text-underline-offset: 3px; } .b7-card__foot a:hover svg { transform: translateX(3px); }
+@media (max-width: 1000px) { .b7__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .b7__grid { grid-template-columns: 1fr; } .b7__inner { gap: 44px; } }
 /* ---------- Final CTA ---------- */
 .cta { padding: clamp(90px, 12vw, 160px) 0; overflow: hidden; }
 .cta__box {
@@ -579,36 +604,35 @@ section { position: relative; }
   </div>
 </section>
 
-<!-- BLOG BENTO -->
-<section class="section" id="blog">
-  <div class="wrap">
-    <div class="center">
-      <span class="eyebrow rv">Early Validation Stories</span>
-      <h2 class="h2 rv">Latest from the Blog</h2>
-      <p class="lead rv">Stories from people who said yes to something new.</p>
+<!-- BLOG (blog7 layout) -->
+<section class="section b7" id="blog">
+  <div class="wrap b7__inner">
+    <div class="b7__head">
+      <span class="b7__badge rv">Early Validation Stories</span>
+      <h2 class="b7__title rv">Latest from the Blog</h2>
+      <p class="b7__desc rv">Stories from people who said yes to something new.</p>
+      <a class="b7__all rv" href="https://medium.com/@TIMEPLACEME" target="_blank" rel="noopener">View All Articles <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
-    <div class="bento">
-      <a class="post post--big rv" href="https://medium.com/@TIMEPLACEME/once-upon-a-vivatech-in-paris-770757454964?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">
-        <div class="post__img"><img loading="lazy" onerror="this.style.opacity=0" src="https://cdn-images-1.medium.com/max/1024/1*dBvGw1Jl1wpeg3YKb9G77Q.jpeg" alt="Once Upon a VivaTech in Paris"></div>
-        <div class="post__body"><span class="post__tag">Paris</span><h3>Once Upon a VivaTech in Paris</h3>
-          <p>A small story about Paris, an e-bike tour, and the first company that simply said yes to TIMEPLACEME.</p>
-          <span class="post__more">Read More <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
-      </a>
-      <a class="post rv" style="--rd:.1s" href="https://medium.com/@TIMEPLACEME/the-company-that-inspired-timeplaceme-became-part-of-its-first-real-story-140b94fab676?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">
-        <div class="post__img"><img loading="lazy" onerror="this.style.opacity=0" src="https://cdn-images-1.medium.com/max/1024/1*NxI9pXU6xOiTFynzWOPVYA.jpeg" alt="The Company That Inspired TIMEPLACEME Became Part of Its First Real Story"></div>
-        <div class="post__body"><span class="post__tag">First gifted trip</span><h3>The Company That Inspired TIMEPLACEME Became Part of Its First Real Story</h3>
-          <p>Before the app officially launched, an unexpected Turkish Airlines ticket became TIMEPLACEME's first real gifted trav...</p>
-          <span class="post__more">Read More <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
-      </a>
-      <a class="post rv" style="--rd:.2s" href="https://medium.com/@TIMEPLACEME/more-than-a-ticket-the-magic-of-4yfn-0e0b434d79e1?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">
-        <div class="post__img"><img loading="lazy" onerror="this.style.opacity=0" src="https://cdn-images-1.medium.com/max/1024/1*4P5JhbRyXHJqeLZ1s04rOg.png" alt="More Than a Ticket: The Magic of 4YFN"></div>
-        <div class="post__body"><span class="post__tag">4YFN</span><h3>More Than a Ticket: The Magic of 4YFN</h3>
-          <p>How TimePlaceMe turned another empty spot into a career-defining moment for a future tech leader.</p>
-          <span class="post__more">Read More <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
-      </a>
+    <div class="b7__grid">
+      <article class="b7-card rv" style="--rd:0.0s">
+        <a class="b7-card__media" href="https://medium.com/@TIMEPLACEME/once-upon-a-vivatech-in-paris-770757454964?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="https://cdn-images-1.medium.com/max/1024/1*dBvGw1Jl1wpeg3YKb9G77Q.jpeg" alt="Once Upon a VivaTech in Paris"></a>
+        <div class="b7-card__head"><h3><a href="https://medium.com/@TIMEPLACEME/once-upon-a-vivatech-in-paris-770757454964?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">Once Upon a VivaTech in Paris</a></h3></div>
+        <div class="b7-card__body"><p>A small story about Paris, an e-bike tour, and the first company that simply said yes to TIMEPLACEME.</p></div>
+        <div class="b7-card__foot"><a href="https://medium.com/@TIMEPLACEME/once-upon-a-vivatech-in-paris-770757454964?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">Read more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+      </article>
+      <article class="b7-card rv" style="--rd:0.1s">
+        <a class="b7-card__media" href="https://medium.com/@TIMEPLACEME/the-company-that-inspired-timeplaceme-became-part-of-its-first-real-story-140b94fab676?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="https://cdn-images-1.medium.com/max/1024/1*NxI9pXU6xOiTFynzWOPVYA.jpeg" alt="The Company That Inspired TIMEPLACEME Became Part of Its First Real Story"></a>
+        <div class="b7-card__head"><h3><a href="https://medium.com/@TIMEPLACEME/the-company-that-inspired-timeplaceme-became-part-of-its-first-real-story-140b94fab676?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">The Company That Inspired TIMEPLACEME Became Part of Its First Real Story</a></h3></div>
+        <div class="b7-card__body"><p>Before the app officially launched, an unexpected Turkish Airlines ticket became TIMEPLACEME’s first real gifted trav...</p></div>
+        <div class="b7-card__foot"><a href="https://medium.com/@TIMEPLACEME/the-company-that-inspired-timeplaceme-became-part-of-its-first-real-story-140b94fab676?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">Read more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+      </article>
+      <article class="b7-card rv" style="--rd:0.2s">
+        <a class="b7-card__media" href="https://medium.com/@TIMEPLACEME/more-than-a-ticket-the-magic-of-4yfn-0e0b434d79e1?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="https://cdn-images-1.medium.com/max/1024/1*4P5JhbRyXHJqeLZ1s04rOg.png" alt="More Than a Ticket: The Magic of 4YFN"></a>
+        <div class="b7-card__head"><h3><a href="https://medium.com/@TIMEPLACEME/more-than-a-ticket-the-magic-of-4yfn-0e0b434d79e1?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">More Than a Ticket: The Magic of 4YFN</a></h3></div>
+        <div class="b7-card__body"><p>How TimePlaceMe turned another empty spot into a career-defining moment for a future tech leader.</p></div>
+        <div class="b7-card__foot"><a href="https://medium.com/@TIMEPLACEME/more-than-a-ticket-the-magic-of-4yfn-0e0b434d79e1?source=rss-edfa4c0e6862------2" target="_blank" rel="noopener">Read more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+      </article>
     </div>
-    <div class="blog__all rv"><a class="btn btn--ghost" href="https://medium.com/@TIMEPLACEME" target="_blank" rel="noopener">View All Articles
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
   </div>
 </section>
 
